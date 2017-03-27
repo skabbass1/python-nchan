@@ -1,60 +1,57 @@
 import time
+import logging
+import operator
 
 import psutil
-import pandas as pd
 import requests
 
 PUB_ENDPOINT = 'http://localhost:8080/pub'
 STATS_CHANNEL = 'system_stats'
 
 
-def top(sort_by='cpu_percent', return_as_dict=True):
+def top(sort_by='cpu_percent'):
     """
     A function that simulates the unix top command
     :return:
     """
-    dfs = []
+    l = []
+    logger = logging.getLogger('PYTOP')
     for proc in psutil.process_iter():
         try:
-            # extract metrics and put them in a pandas dataframe. This is convenient since we
-            # can sort / slice and dice the data as necessary later easily
             pinfo = proc.as_dict(
                 attrs=['username', 'name', 'pid', 'cmdline', 'memory_percent', 'cpu_percent', 'memory_info'])
-            df = pd.DataFrame(dict(
-                username=[pinfo['username']],
-                name=[pinfo['name']],
-                pid=[pinfo['pid']],
-                resident_memory=[pinfo['memory_info'].rss],
-                virtual_memory=[pinfo['memory_info'].vms],
-                memory_percent=[pinfo['memory_percent']],
-                cpu_percent=[pinfo['cpu_percent']],
+
+            d = dict(
+                username=pinfo['username'],
+                name=pinfo['name'],
+                pid=pinfo['pid'],
+                resident_memory=pinfo['memory_info'].rss,
+                virtual_memory=pinfo['memory_info'].vms,
+                memory_percent=pinfo['memory_percent'],
+                cpu_percent=pinfo['cpu_percent'],
+                id=pinfo['pid'],
             )
-            )
-            dfs.append(df)
+
+            l.append(d)
 
         except Exception as ex:
-            print(ex)
+            logger.exception(ex)
             continue
-
-    df = pd.concat(dfs)
-    df = df.sort_values(by=sort_by, ascending=False)
-
-    if return_as_dict:
-        return {col: df[col].values.tolist() for col in df.columns}
-
-    return df
+    return sorted(l, key=operator.itemgetter(sort_by))
 
 
 def main():
     # create a session to enable persistent http connection
     s = requests.Session()
 
+    logger = logging.getLogger('PYTOP')
     while True:
         stats = top()
         s.post(PUB_ENDPOINT, params={'id': STATS_CHANNEL}, json=stats)
+        logger.debug('Posted stats:{}'.format(stats))
         time.sleep(2)
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
     main()
-
