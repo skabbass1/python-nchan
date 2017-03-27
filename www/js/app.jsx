@@ -1,6 +1,34 @@
 
 var Table = ReactBootstrap.Table;
 
+
+function ProcessRow(props){
+return (
+     <tr>
+        <td>{props.processName}</td>
+        <td>{props.pid}</td>
+        <td>{props.userName}</td>
+        <td>{props.cpuPercent}</td>
+        <td>{props.memoryPercent}</td>
+        <td>{props.residentMemory}</td>
+        <td>{props.virtualMemory}</td>
+    </tr>
+);
+
+};
+
+ProcessRow.propTypes = {
+        processName: React.PropTypes.string.isRequired,
+        pid: React.PropTypes.number.isRequired,
+        userName: React.PropTypes.string.isRequired,
+        cpuPercent: React.PropTypes.number,
+        memoryPercent: React.PropTypes.number.isRequired,
+        residentMemory: React.PropTypes.number.isRequired,
+        virtualMemory: React.PropTypes.number.isRequired,
+    };
+
+
+
 var Application = React.createClass({
     
     componentDidMount: function() {
@@ -11,7 +39,9 @@ var Application = React.createClass({
     },
     
     onSystemStatUpdate: function(message){
-          console.log(JSON.parse(message.data));  
+          this.setState({
+              processes:JSON.parse(message.data), 
+          }) ;
     },
     
     getInitialState: function() {
@@ -23,12 +53,11 @@ var Application = React.createClass({
     
     render: function(){
         return (
-           
             <div>
             <div> PY TOP </div>
             <Table striped bordered condensed hover>
                 <thead>
-                 <tr>
+                    <tr>
                         <th>Process Name</th>
                         <th>PID</th>
                         <th>User Name</th>
@@ -36,12 +65,23 @@ var Application = React.createClass({
                         <th>Memory Percent</th>
                         <th>Resident Memory</th>
                         <th>Virtual Memory</th>
-
                     </tr>
                 </thead>
-                
                 <tbody>
-                   
+                {
+                    this.state.processes.map(function(proc){
+                        return (
+                         <ProcessRow
+                             processName={proc.name}
+                             pid={proc.pid}
+                             userName={proc.username}
+                             cpuPercent={proc.cpu_percent}
+                             memoryPercent={proc.memory_percent}
+                             residentMemory={proc.resident_memory}
+                             virtualMemory={proc.virtual_memory}/>
+                        );
+                    })
+                }
                 </tbody>
             </Table>
             </div>

@@ -37,7 +37,7 @@ def top(sort_by='cpu_percent'):
         except Exception as ex:
             logger.exception(ex)
             continue
-    return sorted(l, key=operator.itemgetter(sort_by))
+    return sorted(l, key=operator.itemgetter(sort_by), reverse=True)
 
 
 def main():
@@ -46,7 +46,7 @@ def main():
 
     logger = logging.getLogger('PYTOP')
     while True:
-        stats = top()
+        stats = top()[2:]
         s.post(PUB_ENDPOINT, params={'id': STATS_CHANNEL}, json=stats)
         logger.debug('Posted stats:{}'.format(stats))
         time.sleep(2)
