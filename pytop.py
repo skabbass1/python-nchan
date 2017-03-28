@@ -1,12 +1,20 @@
 import time
 import logging
 import operator
+import collections
+import os
 
 import psutil
 import requests
 
 PUB_ENDPOINT = 'http://localhost:8080/pub'
 STATS_CHANNEL = 'system_stats'
+
+SystemInfo = collections.namedtuple(
+    'SystemInfo',
+    ['procs', 'load_average', 'cpu_count', 'mem_total', 'mem_used', 'swap_total', 'swap_used'])
+
+CPU_COUNT = psutil.cpu_count()
 
 
 def top(sort_by='cpu_percent'):
@@ -25,10 +33,10 @@ def top(sort_by='cpu_percent'):
                 username=pinfo['username'],
                 name=pinfo['name'],
                 pid=pinfo['pid'],
-                resident_memory=pinfo['memory_info'].rss,
-                virtual_memory=pinfo['memory_info'].vms,
-                memory_percent=pinfo['memory_percent'],
-                cpu_percent=pinfo['cpu_percent'],
+                resident_memory=round(pinfo['memory_info'].rss, 2),
+                virtual_memory=round(pinfo['memory_info'].vms, 2),
+                memory_percent=round(pinfo['memory_percent'], 2),
+                cpu_percent=round(pinfo['cpu_percent'], 2),
                 id=pinfo['pid'],
             )
 
@@ -37,7 +45,15 @@ def top(sort_by='cpu_percent'):
         except Exception as ex:
             logger.exception(ex)
             continue
-    return sorted(l, key=operator.itemgetter(sort_by), reverse=True)
+    return SystemInfo(
+        procs=sorted(l, key=operator.itemgetter(sort_by), reverse=True),
+        load_average=os.getloadavg(),
+        cpu_count=CPU_COUNT,
+        mem_total=round(psutil.virtual_memory().total / 1e9),  # Size in GB,
+        mem_used=round(psutil.virtual_memory().used / 1e9),
+        swap_total=round(psutil.swap_memory().total / 1e9),  # Size in GB,
+        swap_used=round(psutil.swap_memory().used / 1e9),
+    )
 
 
 def main():
@@ -46,8 +62,8 @@ def main():
 
     logger = logging.getLogger('PYTOP')
     while True:
-        stats = top()[2:]
-        s.post(PUB_ENDPOINT, params={'id': STATS_CHANNEL}, json=stats)
+        stats = top()
+        s.post(PUB_ENDPOINT, params={'id': STATS_CHANNEL}, json=stats._asdict())
         logger.debug('Posted stats:{}'.format(stats))
         time.sleep(2)
 
