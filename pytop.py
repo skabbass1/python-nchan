@@ -17,7 +17,7 @@ SystemInfo = collections.namedtuple(
 CPU_COUNT = psutil.cpu_count()
 
 
-def top(sort_by='cpu_percent'):
+def top(sort_by='cpu_percent', top_n_procs=10):
     """
     A function that simulates the unix top command
     :return:
@@ -33,8 +33,8 @@ def top(sort_by='cpu_percent'):
                 username=pinfo['username'],
                 name=pinfo['name'],
                 pid=pinfo['pid'],
-                resident_memory=round(pinfo['memory_info'].rss, 2),
-                virtual_memory=round(pinfo['memory_info'].vms, 2),
+                resident_memory=round(pinfo['memory_info'].rss / 1e9, 2),
+                virtual_memory=round(pinfo['memory_info'].vms / 1e9, 2),
                 memory_percent=round(pinfo['memory_percent'], 2),
                 cpu_percent=round(pinfo['cpu_percent'], 2),
                 id=pinfo['pid'],
@@ -46,13 +46,13 @@ def top(sort_by='cpu_percent'):
             logger.exception(ex)
             continue
     return SystemInfo(
-        procs=sorted(l, key=operator.itemgetter(sort_by), reverse=True),
+        procs=sorted(l, key=operator.itemgetter(sort_by), reverse=True)[:top_n_procs],
         load_average=os.getloadavg(),
         cpu_count=CPU_COUNT,
-        mem_total=round(psutil.virtual_memory().total / 1e9),  # Size in GB,
-        mem_used=round(psutil.virtual_memory().used / 1e9),
-        swap_total=round(psutil.swap_memory().total / 1e9),  # Size in GB,
-        swap_used=round(psutil.swap_memory().used / 1e9),
+        mem_total=psutil.virtual_memory().total / 1e9,  # Size in GB,
+        mem_used=psutil.virtual_memory().used / 1e9,
+        swap_total=psutil.swap_memory().total / 1e9,  # Size in GB,
+        swap_used=psutil.swap_memory().used / 1e9,
     )
 
 

@@ -2,7 +2,7 @@
 var Table = ReactBootstrap.Table;
 
 
-function ProcessRow(props){
+function TableRow(props){
 return (
      <tr>
         <td>{props.processName}</td>
@@ -17,7 +17,7 @@ return (
 
 };
 
-ProcessRow.propTypes = {
+TableRow.propTypes = {
         processName: React.PropTypes.string.isRequired,
         pid: React.PropTypes.number.isRequired,
         userName: React.PropTypes.string.isRequired,
@@ -27,6 +27,75 @@ ProcessRow.propTypes = {
         virtualMemory: React.PropTypes.number.isRequired,
     };
 
+
+
+var LiveChart = React.createClass({
+    
+    propTypes: {
+        chartSubtitle: React.PropTypes.string,
+        dataTypeID: React.PropTypes.string.isRequired,
+        dataTypeName: React.PropTypes.string.isRequired,
+        newDataPoint: React.PropTypes.number.isRequired,
+        lastUpdateTime: React.PropTypes.instanceOf(Date).isRequired,
+        container: React.PropTypes.string.isRequired,
+    },
+
+    getDefaultProps: () => {
+        return {
+          chartSubtitle: null,  
+        };
+    },
+    
+    //invoked immediately before rendering when new props or state are being received.
+    componentWillUpdate: function(nextProps){
+        this.chart.setTitle(null, {text: this.props.chartSubtitle});
+        var series = this.chart.get(this.props.dataTypeID)
+        // Keep only 100 data points at most in the series
+        var shift = series.data.length > 100;
+        series.addPoint([nextProps.lastUpdateTime, nextProps.newDataPoint] , true, shift);
+    },
+    
+   componentDidMount: function(){
+        this.chart = new Highcharts.Chart({
+            title: {
+                text: this.props.dataTypeName,
+            },
+            subtitle: {
+                text: this.props.chartSubtitle,
+            },
+            
+            
+            chart: {
+                renderTo: this.props.container,
+                defaultSeriesType: 'spline',
+            },
+            
+            xAxis: {
+                type: 'datetime',
+            },
+           
+            series:[
+                {
+                    id: this.props.dataTypeID,
+                    name: this.props.dataTypeName,
+                    data: [],
+                },
+            ],
+        });
+    },
+
+    // Destroy chart before unmount
+    componentWillUnmount: function(){
+        this.chart.destroy();
+    },
+    
+    render: function(){
+        return(
+            <div id={this.props.container}> </div>
+        );
+    },
+
+});
 
 
 var Application = React.createClass({
@@ -39,14 +108,23 @@ var Application = React.createClass({
     },
     
     onSystemStatUpdate: function(message){
+          var data = JSON.parse(message.data)
           this.setState({
-              processes:JSON.parse(message.data), 
+              processes:data.procs,
+              loadAverage: data.load_average,
+              memoryUsed: data.mem_used,
+              totalAvailableMemory: Math.round(data.mem_total), 
+              lastUpdateTime: new Date().getTime(),
+
           }) ;
     },
     
     getInitialState: function() {
         return ({
             processes: [],
+            loadAverage: 0.0,
+            memoryUsed: 0.0,
+            lastUpdateTime:  new Date().getTime(),
         });
     },
 
@@ -71,7 +149,7 @@ var Application = React.createClass({
                 {
                     this.state.processes.map(function(proc){
                         return (
-                         <ProcessRow
+                         <TableRow
                              processName={proc.name}
                              pid={proc.pid}
                              userName={proc.username}
@@ -84,7 +162,24 @@ var Application = React.createClass({
                 }
                 </tbody>
             </Table>
+            <div> LOAD AVERAGE OVER TIME </div>
+            <LiveChart 
+                dataTypeID='load_average'
+                dataTypeName='Load Average' 
+                newDataPoint={this.state.loadAverage[0]}
+                lastUpdateTime={this.state.lastUpdateTime}
+                container='chartloadaverage' />
+            
+            <LiveChart 
+                dataTypeID='memory'
+                dataTypeName='Total Memory Used(GB)' 
+                chartSubtitle={'Available Memory(GB): ' + this.state.totalAvailableMemory}
+                newDataPoint={this.state.memoryUsed}
+                lastUpdateTime={this.state.lastUpdateTime}
+                container='chartmemoryusage' />
+            
             </div>
+            
         );
     },
 });
