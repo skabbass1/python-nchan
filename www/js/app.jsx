@@ -47,7 +47,7 @@ var LiveChart = React.createClass({
         this.chart.setTitle(null, {text: this.props.chartSubtitle});
         var series = this.chart.get(this.props.dataTypeID)
         // Keep only 100 data points at most in the series
-        var shift = series.data.length > 100;
+        var shift = series.data.length > 200;
         series.addPoint([nextProps.lastUpdateTime, nextProps.newDataPoint] , true, shift);
     },
     
