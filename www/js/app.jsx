@@ -1,7 +1,3 @@
-
-var Table = ReactBootstrap.Table;
-
-
 function TableRow(props){
 return (
      <tr>
@@ -68,6 +64,7 @@ var LiveChart = React.createClass({
             chart: {
                 renderTo: this.props.container,
                 defaultSeriesType: 'spline',
+                backgroundColor: '#1F2739'
             },
             
             xAxis: {
@@ -132,8 +129,8 @@ var Application = React.createClass({
     render: function(){
         return (
             <div>
-            <div> PY TOP </div>
-            <Table striped bordered condensed hover>
+            <div className="yellow"> PY TOP </div>
+            <table className="table">
                 <thead>
                     <tr>
                         <th>Process Name</th>
@@ -161,9 +158,9 @@ var Application = React.createClass({
                     })
                 }
                 </tbody>
-            </Table>
-            <div> LOAD AVERAGE OVER TIME </div>
+            </table>
             <LiveChart 
+                className="liveChart"
                 dataTypeID='load_average'
                 dataTypeName='Load Average' 
                 newDataPoint={this.state.loadAverage[0]}
@@ -171,6 +168,7 @@ var Application = React.createClass({
                 container='chartloadaverage' />
             
             <LiveChart 
+                className="liveChart"
                 dataTypeID='memory'
                 dataTypeName='Total Memory Used(GB)' 
                 chartSubtitle={'Available Memory(GB): ' + this.state.totalAvailableMemory}

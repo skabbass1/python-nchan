@@ -17,7 +17,7 @@ SystemInfo = collections.namedtuple(
 CPU_COUNT = psutil.cpu_count()
 
 
-def top(sort_by='cpu_percent', top_n_procs=10):
+def top(sort_by='cpu_percent', top_n_procs=15):
     """
     A function that simulates the unix top command
     :return:
