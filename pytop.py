@@ -17,7 +17,7 @@ SystemInfo = collections.namedtuple(
 CPU_COUNT = psutil.cpu_count()
 
 
-def top(sort_by='cpu_percent', top_n_procs=15):
+def top(sort_by='cpu_percent', top_n_procs=20):
     """
     A function that simulates the unix top command
     :return:
@@ -33,8 +33,8 @@ def top(sort_by='cpu_percent', top_n_procs=15):
                 username=pinfo['username'],
                 name=pinfo['name'],
                 pid=pinfo['pid'],
-                resident_memory=round(pinfo['memory_info'].rss / 1e9, 2),
-                virtual_memory=round(pinfo['memory_info'].vms / 1e9, 2),
+                resident_memory=round(pinfo['memory_info'].rss / 1e9, 2),  # Size in GB
+                virtual_memory=round(pinfo['memory_info'].vms / 1e9, 2),  # Size in GB
                 memory_percent=round(pinfo['memory_percent'], 2),
                 cpu_percent=round(pinfo['cpu_percent'], 2),
                 id=pinfo['pid'],
