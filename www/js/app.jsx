@@ -55,9 +55,15 @@ var LiveChart = React.createClass({
         this.chart = new Highcharts.Chart({
             title: {
                 text: this.props.dataTypeName,
+                style: {
+                    color: '#FF5733'
+                }
             },
             subtitle: {
                 text: this.props.chartSubtitle,
+                style: {
+                    color: '#FF5733'
+                }
             },
             
             
